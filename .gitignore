@@ -1,0 +1,8 @@
+*.pt
+*.pth
+*.ckpt
+*.npy
+*.zip
+wandb/
+classification/tiny_ckpt.pth
+classification/tiny_ckpt.pth
