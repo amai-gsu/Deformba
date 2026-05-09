@@ -3,6 +3,18 @@
 
 ## 🛠️ Getting Started
 
+1. Clone repo
+   
+   ```bash
+   git clone https://github.com/amai-gsu/Deformba.git
+   cd Deformba
+   ```
+2. Create and activate a new conda environment
+   
+   ```bash
+   conda create -n Deformba python=3.10
+   conda activate Deformba
+   ```
 3. Install dependent packages
    ```
    pip install --upgrade pip
@@ -11,28 +23,33 @@
    cd models/ops_dcnv3
    sh ./make.sh
    ```
-   ```
+   ```bash
    conda env create -f env.yml
    conda activate mamba-2d
-   python -m pip install torch==2.0.1+cu118 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-   cd models/selective_scan && python -m pip install -v -e . --no-build-isolation
-   error case solution 
-   {    # 1) force CUDA_HOME points out conda env
-        export CUDA_HOME="$CONDA_PREFIX"
-        export PATH="$CUDA_HOME/bin:$PATH"
-
-        # 2)
-        export CPATH="$CONDA_PREFIX/targets/x86_64-linux/include:$CPATH"
-        export C_INCLUDE_PATH="$CONDA_PREFIX/targets/x86_64-linux/include:$C_INCLUDE_PATH"
-        export CPLUS_INCLUDE_PATH="$CONDA_PREFIX/targets/x86_64-linux/include:$CPLUS_INCLUDE_PATH"
-
-        # 3) 
-        rm -rf build *.egg-info ~/.cache/torch_extensions
-
-        # 4) 
-        python -m pip install -v -e . --no-build-isolation
-  }
-   cd models/ops_dcnv3
+   
+   python -m pip install torch==2.0.1+cu118 torchvision torchaudio \
+     --index-url https://download.pytorch.org/whl/cu118
+   
+   cd models/selective_scan
+   
+   # Error case solution
+   
+   # 1) Force CUDA_HOME to point to conda env
+   export CUDA_HOME="$CONDA_PREFIX"
+   export PATH="$CUDA_HOME/bin:$PATH"
+   
+   # 2) Add CUDA include paths
+   export CPATH="$CONDA_PREFIX/targets/x86_64-linux/include:$CPATH"
+   export C_INCLUDE_PATH="$CONDA_PREFIX/targets/x86_64-linux/include:$C_INCLUDE_PATH"
+   export CPLUS_INCLUDE_PATH="$CONDA_PREFIX/targets/x86_64-linux/include:$CPLUS_INCLUDE_PATH"
+   
+   # 3) Clean build/cache files
+   rm -rf build *.egg-info ~/.cache/torch_extensions
+   
+   # 4) Reinstall selective_scan
+   python -m pip install -v -e . --no-build-isolation
+   
+   cd ../ops_dcnv3
    sh ./make.sh
    ```
 
