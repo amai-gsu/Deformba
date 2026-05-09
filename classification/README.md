@@ -17,19 +17,19 @@
    python -m pip install torch==2.0.1+cu118 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
    cd models/selective_scan && python -m pip install -v -e . --no-build-isolation
    error case solution 
-   {    # 1) 强制 CUDA_HOME 指到 conda env（保证 $CUDA_HOME/bin/nvcc 存在）
+   {    # 1) force CUDA_HOME points out conda env
         export CUDA_HOME="$CONDA_PREFIX"
         export PATH="$CUDA_HOME/bin:$PATH"
 
-        # 2) 把 thrust 所在的 include 加入头文件搜索路径（不改源码）
+        # 2)
         export CPATH="$CONDA_PREFIX/targets/x86_64-linux/include:$CPATH"
         export C_INCLUDE_PATH="$CONDA_PREFIX/targets/x86_64-linux/include:$C_INCLUDE_PATH"
         export CPLUS_INCLUDE_PATH="$CONDA_PREFIX/targets/x86_64-linux/include:$CPLUS_INCLUDE_PATH"
 
-        # 3) 清理缓存/中间产物
+        # 3) 
         rm -rf build *.egg-info ~/.cache/torch_extensions
 
-        # 4) 重装
+        # 4) 
         python -m pip install -v -e . --no-build-isolation
   }
    cd models/ops_dcnv3
@@ -83,7 +83,7 @@
   
   ```bash
   cd classification 
-  python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=1 --master_addr="127.0.0.1" --master_port=29501 main.py --cfg </path/to/config> --batch-size 128 --data-path </path/of/dataset> --output /tmp --pretrained </path/of/checkpoint>
+  python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=1 --master_addr="127.0.0.1" --master_port=29501 main.py --cfg </path/to/config> --batch-size 128 --data-path </path/of/dataset> --output /tmp --pretrained </path/of/checkpoint> --eval
   ```
   To test the throughput of model:
   
