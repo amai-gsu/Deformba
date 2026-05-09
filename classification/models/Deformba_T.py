@@ -189,7 +189,6 @@ class Context_Adaptive_State_Fusion(nn.Module):
         if self.center_feature_scale:
             center_feature_scale = self.center_feature_scale_module(
                 x1, self.center_feature_scale_proj_weight, self.center_feature_scale_proj_bias)
-            # N, H, W, groups -> N, H, W, groups, 1 -> N, H, W, groups, _d_per_group -> N, H, W, channels
             center_feature_scale = center_feature_scale[..., None].repeat(
                 1, 1, 1, 1, self.channels // self.group).flatten(-2)
             x = x * (1 - center_feature_scale) + x_proj * center_feature_scale
