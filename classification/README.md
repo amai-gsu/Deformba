@@ -53,14 +53,6 @@
    sh ./make.sh
    ```
 
-## ✨ Pre-trained Models
-
-
-<summary> ImageNet-1k Image Classification </summary>
-<br>
-
-
-
 
 ## 📚 Data Preparation
 
