@@ -108,10 +108,7 @@ class Context_Adaptive_State_Fusion(nn.Module):
         if channels % group != 0:
             raise ValueError(
                 f'channels must be divisible by group, but got {channels} and {group}')
-        _d_per_group = channels // group
         dw_kernel_size = dw_kernel_size if dw_kernel_size is not None else kernel_size
-
-
         self.offset_scale = offset_scale
         self.channels = channels
         self.kernel_size = kernel_size
@@ -274,7 +271,6 @@ class Context_Adaptive_SSM_Layer(nn.Module):
         dt_scale=1.0,
         dt_init_floor=1e-4,
         dropout=0.,
-        conv_bias=True,
         bias=False,
         device=None,
         dtype=None,
@@ -388,13 +384,10 @@ class Context_Adaptive_SSM_Layer(nn.Module):
     def ssm(self, input, x: torch.Tensor):
         B, C, H, W = x.shape
         L = H * W
-
         xs = x.view(B, -1, L)
-
         x_dbl = torch.matmul(self.x_proj_weight.view(1, -1, C), xs)
         dts, Bs, Cs = torch.split(x_dbl, [self.dt_rank, self.d_state, self.d_state], dim=1)
         dts = torch.matmul(self.dt_projs_weight.view(1, C, -1), dts)
-
         As = -torch.exp(self.A_logs)
         Ds = self.Ds
         dts = dts.contiguous()
@@ -408,14 +401,9 @@ class Context_Adaptive_SSM_Layer(nn.Module):
             delta_softplus=True,
             return_last_state=False,
         )
-        
-
         h = rearrange(h, "b C 1 (H W) -> b H W C", H=H, W=W)
         h = self.CASF(input, h.contiguous())
-        
         h = rearrange(h, "b C H W -> b C (H W)", H=H, W=W)
-        
-
         y = h * Cs
         y = y + xs * Ds.view(-1, 1)
 
@@ -424,19 +412,15 @@ class Context_Adaptive_SSM_Layer(nn.Module):
     def forward(self, x: torch.Tensor, **kwargs):
         B, C, H, W = x.shape
         input=x
-        
         x = self.in_proj(x)
         x = self.act(self.pos_embed(x))
         y = self.ssm(input, x)
-        y=y.reshape(B, C, H, W)
-
+        y = y.reshape(B, C, H, W)
         y = self.out_norm(y)
         y = self.out_proj(y)
         if self.dropout is not None:
             y = self.dropout(y)
         return y
-
-
 
 class Block(nn.Module):
     def __init__(
@@ -483,7 +467,6 @@ class Block(nn.Module):
             x = x + self.drop_path(self.layer_scale_2.unsqueeze(-1).unsqueeze(-1) * self.mlp(self.norm2(x)))
 
         return x
-
 
 class DeformbaStage(nn.Module):
     def __init__(
@@ -533,7 +516,6 @@ class DeformbaStage(nn.Module):
         x = self.blocks(x)
         return x
 
-
 class LayerNorm(nn.Module):
 
     def __init__(self, dim, eps=1e-6):
@@ -550,9 +532,6 @@ class LayerNorm(nn.Module):
             x = self.norm(x)
             x = x.permute(0, 3, 1, 2)
         return x
-
-
-
 
 class Deformba(nn.Module):
     r"""
@@ -683,9 +662,6 @@ class Deformba(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
-
-
-
 
 @register_model
 def Deformba_T(pretrained=False, **kwargs):
