@@ -87,7 +87,7 @@ class CenterFeatureScaleModule(nn.Module):
         return center_feature_scale
 
 
-class Dynamic_Adaptive_Scan(nn.Module):
+class Context_Adaptive_State_Fusion(nn.Module):
     def __init__(
             self,
             channels=64,
@@ -247,7 +247,7 @@ class MlpHead(nn.Module):
         return x
 
 
-class DASSM(nn.Module):
+class Context_Adaptive_SSM_Layer(nn.Module):
     def __init__(
         self,
         d_model,
@@ -309,7 +309,7 @@ class DASSM(nn.Module):
 
         self.dropout = nn.Dropout(dropout) if dropout > 0. else None
         num_group=d_model//head_dim
-        self.da_scan = Dynamic_Adaptive_Scan(channels=self.d_inner,group=num_group)
+        self.CASF = Context_Adaptive_State_Fusion(channels=self.d_inner,group=num_group)
         self.pos_embed = ResDWC(self.d_inner, 5)
     @staticmethod
     def dt_init(dt_rank, d_inner, dt_scale=1.0, dt_init="random", dt_min=0.001, dt_max=0.1, dt_init_floor=1e-4, bias=True,**factory_kwargs):
@@ -408,7 +408,7 @@ class DASSM(nn.Module):
         # import pdb; pdb.set_trace()
 
         h = rearrange(h, "b C 1 (H W) -> b H W C", H=H, W=W)
-        h = self.da_scan(input, h.contiguous())
+        h = self.CASF(input, h.contiguous())
         # import pdb; pdb.set_trace()
         h = rearrange(h, "b C H W -> b C (H W)", H=H, W=W)
         
@@ -426,7 +426,7 @@ class DASSM(nn.Module):
         x = self.act(self.pos_embed(x))
 
 
-        # x=self.da_scan(input,x.permute(0, 2,3,1).contiguous())
+        # x=self.CASF(input,x.permute(0, 2,3,1).contiguous())
         y = self.ssm(input, x)
         y=y.reshape(B, C, H, W)
 
@@ -576,7 +576,7 @@ class Deformba(nn.Module):
             num_classes=1000,
             depths=(3, 3, 9, 3),
             dims=(96, 192, 384, 768),
-            token_mixers=[DASSM, DASSM, DASSM, DASSM],
+            token_mixers=[Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer],
             head_dim=24,
             norm_layer=nn.BatchNorm2d,
             act_layer=nn.GELU,
@@ -690,7 +690,7 @@ class Deformba(nn.Module):
 def Deformba_T(pretrained=False, **kwargs):
     model = Deformba(
         depths=[3, 4, 12, 5], dims=[80, 160, 320, 512], mlp_ratios=(4, 4, 3, 3),
-        token_mixers=[DASSM, DASSM, DASSM, DASSM],
+        token_mixers=[Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer],
         head_dim=16,
          drop_path_rate=0.3,
          **kwargs
@@ -701,7 +701,7 @@ def Deformba_T(pretrained=False, **kwargs):
 def Deformba_S(pretrained=False, **kwargs):
     model = Deformba(
         depths=[4, 8, 20, 6], dims=[96, 192, 384, 512], mlp_ratios=(4, 4, 3, 3),
-        token_mixers=[DASSM, DASSM, DASSM, DASSM],
+        token_mixers=[Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer],
         head_dim=16,
         drop_path_rate=0.4,
         layerscale=[False, False, True, True],
@@ -713,7 +713,7 @@ def Deformba_S(pretrained=False, **kwargs):
 def Deformba_B(pretrained=False, **kwargs):
     model = Deformba(
         depths=[4, 8, 25, 8], dims=[112, 224, 448, 640], mlp_ratios=(4, 4, 3, 4),
-        token_mixers=[DASSM, DASSM, DASSM, DASSM],
+        token_mixers=[Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer],
         head_dim=16,
         drop_path_rate=0.6,
         layerscale=[False, False, True, True],
