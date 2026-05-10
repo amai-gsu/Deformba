@@ -719,6 +719,7 @@ def Deformba_B(pretrained=False, **kwargs):
         head_dim=16,
         drop_path_rate=0.6,
         layerscale=[False, False, True, True],
+        eca=True,
          **kwargs
     )
     return model
