@@ -3,10 +3,6 @@
 # Copyright (c) 2021 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ze Liu
-# -----------------------------------------------------------------------------------
-# Spatial-Mamba: Effective Visual State Space Models via Structure-Aware State Fusion
-# Modified by Chaodong Xiao
-# -----------------------------------------------------------------------------------
 
 import os
 import time
