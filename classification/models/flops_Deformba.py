@@ -4,7 +4,7 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 import warnings
 warnings.filterwarnings("ignore")
-from classification.models.Deformba_T import *
+from classification.models.Deformba import *
 model=Deformba_B()
 model=model.to(torch.device("cuda:0"))
 input_size = [1, 3, 224, 224]

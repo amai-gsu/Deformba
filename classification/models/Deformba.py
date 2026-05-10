@@ -102,6 +102,7 @@ class Context_Adaptive_State_Fusion(nn.Module):
             norm_layer='LN',
             center_feature_scale=False,
             remove_center=False,
+            eca=False
     ):
         super().__init__()
         if channels % group != 0:
@@ -144,8 +145,10 @@ class Context_Adaptive_State_Fusion(nn.Module):
         self.offset = nn.Linear(
             channels,
             group * (kernel_size * kernel_size - remove_center) * 2)
-        self.ca_conv = nn.Conv1d(1, 1, kernel_size=5, padding=(5 - 1)//2, bias=False)
-        self.ca_act = nn.Sigmoid()
+        self.use_eca = eca
+        if self.use_eca:
+            self.ca_conv = nn.Conv1d(1, 1, kernel_size=5, padding=(5 - 1)//2, bias=False)
+            self.ca_act = nn.Sigmoid()
         self._reset_parameters()
 
         if center_feature_scale:
@@ -165,13 +168,13 @@ class Context_Adaptive_State_Fusion(nn.Module):
         x_proj = x
         x1 = input
         x1 = self.dw_conv(x1)
-        ##eca
-        y = x1.mean(dim=(1, 2))
-        y = y.unsqueeze(1)
-        y = self.ca_conv(y)
-        y = self.ca_act(y)
-        y = y.unsqueeze(2)
-        x1 = x1 * y
+        if self.use_eca:
+            y = x1.mean(dim=(1, 2))
+            y = y.unsqueeze(1)
+            y = self.ca_conv(y)
+            y = self.ca_act(y)
+            y = y.unsqueeze(2)
+            x1 = x1 * y
 
         offset = self.offset(x1)
         mask = torch.ones(N, H, W, self.group, device=x.device, dtype=x.dtype)
@@ -275,6 +278,7 @@ class Context_Adaptive_SSM_Layer(nn.Module):
         bias=False,
         device=None,
         dtype=None,
+        eca=False,
         **kwargs,
     ):
         factory_kwargs = {"device": device, "dtype": dtype}
@@ -308,7 +312,7 @@ class Context_Adaptive_SSM_Layer(nn.Module):
 
         self.dropout = nn.Dropout(dropout) if dropout > 0. else None
         num_group=d_model//head_dim
-        self.CASF = Context_Adaptive_State_Fusion(channels=self.d_inner,group=num_group)
+        self.CASF = Context_Adaptive_State_Fusion(channels=self.d_inner,group=num_group, eca=eca)
         self.pos_embed = ResDWC(self.d_inner, 5)
     @staticmethod
     def dt_init(dt_rank, d_inner, dt_scale=1.0, dt_init="random", dt_min=0.001, dt_max=0.1, dt_init_floor=1e-4, bias=True,**factory_kwargs):
@@ -444,17 +448,17 @@ class Block(nn.Module):
             mlp_ratio=4,
             act_layer=nn.GELU,
             drop_path=0.,
-            ffnconv=True, index=None, layerscale=False
+            ffnconv=True, index=None, layerscale=False, eca=False
 
     ):
         super().__init__()
         if isinstance(token_mixer, list):
             if index % 2 == 0:
-                self.token_mixer = token_mixer[0](dim, head_dim=head_dim)
+                self.token_mixer = token_mixer[0](dim, head_dim=head_dim, eca=eca)
             elif index % 2 == 1:
-                self.token_mixer = token_mixer[1](dim, head_dim=head_dim)
+                self.token_mixer = token_mixer[1](dim, head_dim=head_dim, eca=eca)
         else:
-            self.token_mixer = token_mixer(dim, head_dim=head_dim)
+            self.token_mixer = token_mixer(dim, head_dim=head_dim, eca=eca)
 
         self.norm1 = LayerNorm(dim, eps=1e-6)
         self.norm2 = nn.BatchNorm2d(dim)
@@ -495,7 +499,8 @@ class DeformbaStage(nn.Module):
             norm_layer=None,
             mlp_ratio=4,
             ffnconv=True,
-            layerscale=False
+            layerscale=False,
+            eca=False,
     ):
         super().__init__()
         self.grad_checkpointing = False
@@ -518,7 +523,7 @@ class DeformbaStage(nn.Module):
                 head_dim=head_dim,
                 act_layer=act_layer,
                 mlp_ratio=mlp_ratio,
-                ffnconv=ffnconv, index=i, layerscale=layerscale
+                ffnconv=ffnconv, index=i, layerscale=layerscale, eca=eca
             ))
             in_chs = out_chs
         self.blocks = nn.Sequential(*stage_blocks)
@@ -580,6 +585,7 @@ class Deformba(nn.Module):
             drop_rate=0.,
             drop_path_rate=0.1,
             layerscale=[False,False,False,False],
+            eca=False,
             **kwargs,
     ):
         super().__init__()
@@ -629,8 +635,8 @@ class Deformba(nn.Module):
                 norm_layer=norm_layer,
                 mlp_ratio=mlp_ratios[i],
                 ffnconv=self.ffnconvs[i],
-                layerscale=layerscale[i]
-
+                layerscale=layerscale[i],
+                eca=eca
             ))
             norm = LayerNorm(dims[i], eps=1e-6)
             setattr(self, f"norm{i + 1}", norm)
@@ -688,6 +694,7 @@ def Deformba_T(pretrained=False, **kwargs):
         token_mixers=[Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer],
         head_dim=16,
          drop_path_rate=0.3,
+         eca=True,
          **kwargs
     )
     return model
@@ -699,7 +706,7 @@ def Deformba_S(pretrained=False, **kwargs):
         token_mixers=[Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer, Context_Adaptive_SSM_Layer],
         head_dim=16,
         drop_path_rate=0.4,
-        layerscale=[False, False, True, True],
+        layerscale=[False, False, True, True],   
          **kwargs
     )
     return model

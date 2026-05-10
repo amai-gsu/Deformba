@@ -1,6 +1,4 @@
-#Tiny
 from .Deformba_T import Deformba
-# from .Deformba_SB import Deformba
 def build_model(config, is_pretrain=False):
     model_type = config.MODEL.TYPE
     if model_type in ["Deformba"]:
