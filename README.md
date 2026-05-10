@@ -18,6 +18,6 @@
 |:---------------:| :----------: | :--------: |:-----:|:------:|:-----:|:---------------------------------------------------------------------:|
 | Deformba-T    | ImageNet-1K  |  224x224   | 83.8  |  25M   | 4.8G  | [ckpt](https://drive.google.com/file/d/1EkRNRcYsdh9gNai5ApiOiAZ7dLXirf39/view?usp=drive_link) |        |
 | Deformba-S | ImageNet-1K  |  224x224   | 84.9  |  45M   | 10.3G | [ckpt](https://drive.google.com/file/d/1PIPwdNaFg9ypztxlQU8KFLTBe5lKmOBR/view?usp=sharing) |
-| Deformba-B | ImageNet-1K  |  224x224   | 85.4  |  85M   | 16.3G | [ckpt]() |
+| Deformba-B | ImageNet-1K  |  224x224   | 85.4  |  85M   | 16.3G | [ckpt](https://drive.google.com/file/d/1kAaroBPP3JjJ-XRhbjKiB9J3GjJj7dZq/view?usp=sharing) |
 
 </div>
