@@ -27,7 +27,7 @@ from timm.utils import setup_default_logging, set_jit_fuser, decay_batch_step, c
 
 from timm.models import swin_tiny_patch4_window7_224,swin_small_patch4_window7_224,swin_base_patch4_window7_224
 
-import Defromba
+import Deformba
 
 has_apex = False
 try:
